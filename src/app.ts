@@ -5,6 +5,7 @@ import cors from "cors";
 import helmet from "helmet";
 import authRoutes from "./routes/auth.routes.js"
 import itemRoutes from "./routes/item.routes.js"
+import uploadRoutes from "./routes/upload.routes.js";
 
 const app = express();
 
@@ -41,6 +42,8 @@ app.get("/api/v1/health", (req, res) => {
 app.use("/api/v1/auth", authRoutes)
 
 app.use("/api/v1/items", itemRoutes)
+
+app.use("/api/v1/upload", uploadRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
