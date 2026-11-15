@@ -3,6 +3,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import authRoutes from "./routes/auth.routes.js"
 
 const app = express();
 
@@ -35,6 +36,8 @@ app.get("/api/v1/health", (req, res) => {
     message: "LostLink API is running",
   });
 });
+
+app.use("/api/v1/auth", authRoutes)
 
 app.use((req, res) => {
   res.status(404).json({
