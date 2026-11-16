@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import Item from "../models/Item.js";
+import type { HydratedDocument } from "mongoose";
+import Item, { IItem } from "../models/Item.js";
 
 const normalize = (value: string): string => {
   return value.trim().toLowerCase();
@@ -63,10 +64,7 @@ const calculateMatchScore = (lostItem: any, foundItem: any) => {
 
   const reasons: string[] = [];
 
-  if (
-    normalize(lostItem.category) ===
-    normalize(foundItem.category)
-  ) {
+  if (normalize(lostItem.category) === normalize(foundItem.category)) {
     score += 30;
     reasons.push("Same category");
   }
@@ -82,26 +80,17 @@ const calculateMatchScore = (lostItem: any, foundItem: any) => {
     reasons.push("Similar item name");
   }
 
-  if (
-    normalize(lostItem.province) ===
-    normalize(foundItem.province)
-  ) {
+  if (normalize(lostItem.province) === normalize(foundItem.province)) {
     score += 10;
     reasons.push("Same province");
   }
 
-  if (
-    normalize(lostItem.district) ===
-    normalize(foundItem.district)
-  ) {
+  if (normalize(lostItem.district) === normalize(foundItem.district)) {
     score += 15;
     reasons.push("Same district");
   }
 
-  if (
-    normalize(lostItem.city) ===
-    normalize(foundItem.city)
-  ) {
+  if (normalize(lostItem.city) === normalize(foundItem.city)) {
     score += 10;
     reasons.push("Same city");
   }
@@ -123,7 +112,39 @@ const calculateMatchScore = (lostItem: any, foundItem: any) => {
   };
 };
 
-// Find potential matching reports.
+// Find existing matching items for automatic notifications.
+export const findMatchingItemsForNotification = async (
+  originalItem: HydratedDocument<IItem>,
+) => {
+  const oppositeType =
+    originalItem.type === "lost" ? "found" : "lost";
+
+  const candidates = await Item.find({
+    _id: { $ne: originalItem._id },
+    user: { $ne: originalItem.user },
+    type: oppositeType,
+    status: "active",
+  })
+    .sort({ createdAt: -1 })
+    .limit(100);
+
+  const matches = candidates
+    .map((candidate) => {
+      const result = calculateMatchScore(originalItem, candidate);
+
+      return {
+        item: candidate,
+        matchScore: result.score,
+      };
+    })
+    .filter((match) => match.matchScore >= 40)
+    .sort((a, b) => b.matchScore - a.matchScore)
+    .slice(0, 10);
+
+  return matches.map((match) => match.item);
+};
+
+// Find potential matching reports for the API.
 export const getPotentialMatches = async (
   req: Request,
   res: Response,

@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { QueryFilter } from "mongoose";
 import Item, { IItem } from "../models/Item.js";
+import { findMatchingItemsForNotification } from "./matching.controller.js";
+import { createPotentialMatchNotifications } from "../services/notification.service.js";
 
 const escapeRegex = (value: string): string => {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -92,6 +94,15 @@ const createItem = async (
           : undefined,
       user: req.userId,
     });
+
+    // Find potential matches and create notifications
+    try {
+      const matchedItems = await findMatchingItemsForNotification(item);
+
+      await createPotentialMatchNotifications(item, matchedItems);
+    } catch (notificationError) {
+      console.error("Automatic notification error:", notificationError);
+    }
 
     res.status(201).json({
       success: true,
