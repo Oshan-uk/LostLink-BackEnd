@@ -1,25 +1,39 @@
-import { Router } from "express"
+import { Router } from "express";
 
-import { createLostItem, createFoundItem, getAllItems, getItemById, getMyItems, updateItem, deleteItem, markItemReturned } from "../controllers/item.controller.js"
+import {
+  createLostItem,
+  createFoundItem,
+  getAllItems,
+  getItemById,
+  getMyItems,
+  updateItem,
+  deleteItem,
+  markItemReturned,
+} from "../controllers/item.controller.js";
 
-import protect from "../middleware/auth.middleware.js"
+import { getPotentialMatches } from "../controllers/matching.controller.js";
 
-const router = Router()
+import protect from "../middleware/auth.middleware.js";
 
-router.get("/", getAllItems)
+const router = Router();
 
-router.get("/mine", protect, getMyItems)
+router.get("/", getAllItems);
 
-router.post("/lost", protect, createLostItem)
+router.get("/mine", protect, getMyItems);
 
-router.post("/found", protect, createFoundItem)
+// Smart matching
+router.get("/:id/matches", getPotentialMatches);
 
-router.patch("/:id/returned", protect, markItemReturned)
+router.post("/lost", protect, createLostItem);
 
-router.get("/:id", getItemById)
+router.post("/found", protect, createFoundItem);
 
-router.patch("/:id", protect, updateItem)
+router.patch("/:id/returned", protect, markItemReturned);
 
-router.delete("/:id", protect, deleteItem)
+router.get("/:id", getItemById);
 
-export default router
+router.patch("/:id", protect, updateItem);
+
+router.delete("/:id", protect, deleteItem);
+
+export default router;
