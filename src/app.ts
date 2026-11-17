@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth.routes.js"
 import itemRoutes from "./routes/item.routes.js"
 import uploadRoutes from "./routes/upload.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import aiRoutes from "./routes/ai.routes.js";
 
 const app = express();
 
@@ -47,6 +48,8 @@ app.use("/api/v1/items", itemRoutes)
 app.use("/api/v1/upload", uploadRoutes);
 
 app.use("/api/v1/notifications", notificationRoutes);
+
+app.use("/api/v1/ai", aiRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
