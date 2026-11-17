@@ -95,26 +95,31 @@ export const chatWithAI = async (
   try {
     const message: unknown = req.body?.message;
 
-    // Validate user message
-    if (typeof message !== "string" || !message.trim()) {
+    if (typeof message !== "string") {
       res.status(400).json({
         success: false,
-        message: "Please enter a message.",
+        message: "Message must be a valid string.",
       });
-
-      return;
-    }
-
-    if (message.length > 500) {
-      res.status(400).json({
-        success: false,
-        message: "Message must not exceed 500 characters.",
-      });
-
       return;
     }
 
     const userMessage = message.trim();
+
+    if (!userMessage) {
+      res.status(400).json({
+        success: false,
+        message: "Please enter a message.",
+      });
+      return;
+    }
+
+    if (userMessage.length > 500) {
+      res.status(400).json({
+        success: false,
+        message: "Message must not exceed 500 characters.",
+      });
+      return;
+    }
 
     // Step 1: Ask Gemini to understand the user's question
     const intentPrompt = `
