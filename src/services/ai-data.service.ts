@@ -37,6 +37,35 @@ export const getActiveItemStatistics = async () => {
   };
 };
 
+const searchSynonyms: Record<string, string[]> = {
+  phone: ["mobile", "cellphone", "smartphone"],
+  mobile: ["phone", "cellphone", "smartphone"],
+  cellphone: ["phone", "mobile", "smartphone"],
+  wallet: ["purse"],
+  purse: ["wallet"],
+  backpack: ["bag", "schoolbag"],
+  laptop: ["notebook"],
+  glasses: ["spectacles", "eyeglasses"],
+  spectacles: ["glasses", "eyeglasses"],
+  keys: ["key"],
+};
+
+const getSearchTerms = (search: string): string[] => {
+  const words = search.toLowerCase().split(/\s+/).filter(Boolean);
+
+  const terms = new Set<string>();
+
+  for (const word of words) {
+    terms.add(word);
+
+    for (const synonym of searchSynonyms[word] ?? []) {
+      terms.add(synonym);
+    }
+  }
+
+  return [...terms];
+};
+
 // Search actual items from MongoDB
 export const searchLostLinkItems = async (
   filters: ItemSearchFilters,
@@ -51,57 +80,46 @@ export const searchLostLinkItems = async (
   }
 
   if (filters.category) {
-    query.category = new RegExp(
-      escapeRegex(filters.category),
-      "i",
-    );
+    query.category = new RegExp(escapeRegex(filters.category), "i");
   }
 
   if (filters.province) {
-    query.province = new RegExp(
-      `^${escapeRegex(filters.province)}$`,
-      "i",
-    );
+    query.province = new RegExp(`^${escapeRegex(filters.province)}$`, "i");
   }
 
   if (filters.district) {
-    query.district = new RegExp(
-      `^${escapeRegex(filters.district)}$`,
-      "i",
-    );
+    query.district = new RegExp(`^${escapeRegex(filters.district)}$`, "i");
   }
 
   if (filters.city) {
-    query.city = new RegExp(
-      `^${escapeRegex(filters.city)}$`,
-      "i",
-    );
+    query.city = new RegExp(`^${escapeRegex(filters.city)}$`, "i");
   }
 
   if (filters.specificPlace) {
-    query.specificPlace = new RegExp(
-      escapeRegex(filters.specificPlace),
-      "i",
-    );
+    query.specificPlace = new RegExp(escapeRegex(filters.specificPlace), "i");
   }
 
   if (filters.search) {
-    const searchRegex = new RegExp(
-      escapeRegex(filters.search),
-      "i",
-    );
+    const searchTerms = getSearchTerms(filters.search);
 
-    query.$or = [
-      { name: searchRegex },
-      { description: searchRegex },
-      { category: searchRegex },
+    query.$and = [
+      ...(query.$and ?? []),
+
+      ...searchTerms.map((term) => {
+        const searchRegex = new RegExp(escapeRegex(term), "i");
+
+        return {
+          $or: [
+            { name: searchRegex },
+            { description: searchRegex },
+            { category: searchRegex },
+          ],
+        };
+      }),
     ];
   }
 
-  const safeLimit = Math.min(
-    Math.max(Math.trunc(limit), 1),
-    10,
-  );
+  const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 10);
 
   const items = await Item.find(query)
     .select(
