@@ -92,7 +92,7 @@ const createItem = async (
         typeof imageUrl === "string" && imageUrl.trim()
           ? imageUrl.trim()
           : undefined,
-      user: req.userId,
+      user: req.userId, 
     });
 
     // Find potential matches and create notifications

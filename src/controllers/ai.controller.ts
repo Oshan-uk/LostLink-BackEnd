@@ -26,7 +26,6 @@ interface ParsedAIIntent {
   filters: ItemSearchFilters;
 }
 
-// Safely extract text values from Gemini's response
 const cleanText = (value: unknown): string | undefined => {
   if (typeof value !== "string") {
     return undefined;
@@ -37,7 +36,6 @@ const cleanText = (value: unknown): string | undefined => {
   return cleanedValue ? cleanedValue.slice(0, 100) : undefined;
 };
 
-// Extract and validate the intent returned by Gemini
 const parseAIIntent = (response: string): ParsedAIIntent => {
   try {
     const jsonMatch = response.match(/\{[\s\S]*\}/);
@@ -87,7 +85,7 @@ const parseAIIntent = (response: string): ParsedAIIntent => {
   }
 };
 
-// Main AI chat controller
+
 export const chatWithAI = async (
   req: Request,
   res: Response,
@@ -146,7 +144,7 @@ export const chatWithAI = async (
       return;
     }
 
-    // Step 1: Ask Gemini to understand the user's question
+
     const intentPrompt = `
 You are an intent extraction system for LostLink, a Sri Lankan lost-and-found platform.
 
@@ -211,7 +209,6 @@ ${userMessage}
 
     const parsedIntent = parseAIIntent(intentResponse);
 
-    // Step 2: Retrieve actual information from MongoDB
     let statistics: Awaited<ReturnType<typeof getActiveItemStatistics>> | null =
       null;
 
@@ -225,7 +222,7 @@ ${userMessage}
       items = await searchLostLinkItems(parsedIntent.filters);
     }
 
-    // Step 3: Prepare safe public information for Gemini
+
     const publicItems = items.map((item) => ({
       id: String(item._id),
       name: item.name,
@@ -246,7 +243,7 @@ ${userMessage}
       returnedItemLimit: 10,
     };
 
-    // Step 4: Ask Gemini to generate a friendly response
+
     const responsePrompt = `
 You are the friendly AI Assistant of LostLink.
 
@@ -277,6 +274,7 @@ ${JSON.stringify(databaseInformation, null, 2)}
 Previous conversation:
 ${JSON.stringify(conversationHistory, null, 2)}
 
+
 Current user's question:
 ${userMessage}
 
@@ -285,7 +283,7 @@ Write a friendly and helpful response.
 
     const reply = await generateGeminiResponse(responsePrompt);
 
-    // Step 5: Return the response and actual matching items
+
     res.status(200).json({
       success: true,
       reply,
